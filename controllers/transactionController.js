@@ -8,6 +8,25 @@ const ALLOWED_STATUS = ["active", "undone"];
 
 const normalizeCategoryName = (category) => category?.trim();
 
+const deriveCategoryLookup = ({ category, categoryId }) => {
+  const normalizedCategoryId =
+    typeof categoryId === "string" ? categoryId.trim() : categoryId;
+
+  if (normalizedCategoryId) {
+    return { categoryId: normalizedCategoryId, categoryName: undefined };
+  }
+
+  const normalizedCategory = normalizeCategoryName(category);
+  if (normalizedCategory && mongoose.Types.ObjectId.isValid(normalizedCategory)) {
+    return { categoryId: normalizedCategory, categoryName: undefined };
+  }
+
+  return {
+    categoryId: undefined,
+    categoryName: normalizedCategory || undefined,
+  };
+};
+
 const resolveCategory = async ({ userId, type, categoryName, categoryId }) => {
   if (!type || !ALLOWED_TYPES.includes(type)) {
     const error = new Error("type must be either income or expense");
@@ -105,13 +124,18 @@ export const createTransaction = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const fallbackCategoryName =
-    category ||
-    (type === "income"
-      ? req.user.defaultIncomeCategories?.[0]
-      : req.user.defaultExpenseCategories?.[0]);
+  const { categoryId: resolvedCategoryId, categoryName: providedCategoryName } =
+    deriveCategoryLookup({ category, categoryId });
 
-  if (!categoryId && !fallbackCategoryName) {
+  const defaultCategoryName =
+    type === "income"
+      ? normalizeCategoryName(req.user.defaultIncomeCategories?.[0])
+      : normalizeCategoryName(req.user.defaultExpenseCategories?.[0]);
+
+  const fallbackCategoryName =
+    resolvedCategoryId ? undefined : providedCategoryName || defaultCategoryName || undefined;
+
+  if (!resolvedCategoryId && !fallbackCategoryName) {
     const error = new Error("category is required");
     error.status = 400;
     throw error;
@@ -121,7 +145,7 @@ export const createTransaction = asyncHandler(async (req, res) => {
     userId: req.user._id,
     type,
     categoryName: fallbackCategoryName,
-    categoryId,
+    categoryId: resolvedCategoryId,
   });
 
   let transactionDate = date ? new Date(date) : new Date();
@@ -136,8 +160,8 @@ export const createTransaction = asyncHandler(async (req, res) => {
     title: title?.trim() || categoryDoc?.name || type,
     description,
     type,
-    category: categoryDoc?.name || category,
-    categoryId: categoryDoc?._id,
+    category: categoryDoc.name,
+    categoryId: categoryDoc._id,
     amount: numericAmount,
     date: transactionDate,
     status: status || "active",
@@ -299,17 +323,30 @@ export const updateTransaction = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  if (updates.category || updates.type) {
-    const categoryDoc = await resolveCategory(
-      {
-        userId: req.user._id,
-        type: updates.type || transaction.type,
-        categoryName: updates.category || transaction.category,
+  const needsCategoryResolution =
+    updates.category !== undefined ||
+    updates.categoryId !== undefined ||
+    updates.type !== undefined;
+
+  if (needsCategoryResolution) {
+    const { categoryId: resolvedCategoryId, categoryName: providedCategoryName } =
+      deriveCategoryLookup({
+        category: updates.category,
         categoryId: updates.categoryId,
-      }
-    );
-    transaction.category = categoryDoc?.name || transaction.category;
-    transaction.categoryId = categoryDoc?._id;
+      });
+
+    const categoryNameForLookup =
+      resolvedCategoryId ? undefined : providedCategoryName || transaction.category;
+
+    const categoryDoc = await resolveCategory({
+      userId: req.user._id,
+      type: updates.type || transaction.type,
+      categoryName: categoryNameForLookup,
+      categoryId: resolvedCategoryId,
+    });
+
+    transaction.category = categoryDoc.name;
+    transaction.categoryId = categoryDoc._id;
   }
 
   if (updates.title !== undefined) {
