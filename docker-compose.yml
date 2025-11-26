@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: myex-api
+    env_file: .env
+    environment:
+      - PORT=${PORT:-5000}
+      - MONGO_URI=${MONGO_URI:-mongodb://mongodb:27017/myex}
+      - MONGO_DB_NAME=${MONGO_DB_NAME:-myex}
+    ports:
+      - "${PORT:-5000}:5000"
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: myex-mongodb
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
