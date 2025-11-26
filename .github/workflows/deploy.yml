@@ -61,8 +61,12 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           port: ${{ secrets.DO_SSH_PORT || 22 }}
           script_stop: true
+          envs: APP_DIR,ENV_FILE
           script: |
             set -euo pipefail
+
+            APP_DIR="${APP_DIR:-/var/www/myex-api}"
+            ENV_FILE="${ENV_FILE:-}"
 
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
