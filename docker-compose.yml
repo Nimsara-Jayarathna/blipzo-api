@@ -13,6 +13,9 @@ services:
       - "${PORT:-5000}:5000"
     depends_on:
       - mongodb
+    networks:
+      - myex-api_default
+      - npm_default   # <- Add this line
     restart: unless-stopped
 
   mongodb:
@@ -21,6 +24,14 @@ services:
     restart: unless-stopped
     volumes:
       - mongo-data:/data/db
+    networks:
+      - myex-api_default   # Only internal API network
 
 volumes:
   mongo-data:
+
+networks:
+  myex-api_default:
+    driver: bridge
+  npm_default:
+    external: true   # <- tells Compose to use existing npm_default network
