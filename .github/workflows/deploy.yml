@@ -50,7 +50,7 @@ jobs:
           source: "."
           target: ${{ env.APP_DIR }}
           overwrite: true
-          rm: true
+          # leave existing directory in place; overwrite handles updates
           strip_components: 0
           exclude: ".git/**,node_modules/**,.github/**,.env"
 
@@ -131,7 +131,7 @@ jobs:
           source: "."
           target: ${{ env.APP_DIR }}
           overwrite: true
-          rm: true
+          # leave existing directory in place; overwrite handles updates
           strip_components: 0
           exclude: ".git/**,node_modules/**,.github/**,.env"
 
