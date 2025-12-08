@@ -135,59 +135,7 @@ const buildTransactionResponse = (transaction) => ({
   updatedAt: transaction.updatedAt,
 });
 
-export const createTransaction = asyncHandler(async (req, res) => {
-  const {
-    title,
-    type,
-    amount,
-    category,
-    categoryId,
-    description,
-    status,
-  } = req.body || {};
-
-  if (!type || !ALLOWED_TYPES.includes(type)) {
-    const error = new Error("type must be either income or expense");
-    error.status = 400;
-    throw error;
-  }
-
-  const numericAmount = Number(amount);
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    const error = new Error("amount must be a positive number");
-    error.status = 400;
-    throw error;
-  }
-
-  if (status && !ALLOWED_STATUS.includes(status)) {
-    const error = new Error("status must be either active or undone");
-    error.status = 400;
-    throw error;
-  }
-
-  const categoryDoc = await resolveCategoryForCreation({
-    req,
-    type,
-    category,
-    categoryId,
-  });
-
-  const transaction = await Transaction.create({
-    user: req.user._id,
-    title: title?.trim() || categoryDoc?.name || type,
-    description,
-    type,
-    category: categoryDoc.name,
-    categoryId: categoryDoc._id,
-    amount: numericAmount,
-    status: status || "active",
-    isCustomDate: false,
-  });
-
-  res.status(201).json({ transaction: buildTransactionResponse(transaction) });
-});
-
-export const createTransactionWithCustomDate = asyncHandler(async (req, res) => {
+const handleCreateTransaction = async ({ req, res, requireDate }) => {
   const {
     title,
     type,
@@ -212,7 +160,7 @@ export const createTransactionWithCustomDate = asyncHandler(async (req, res) => 
     throw error;
   }
 
-  if (!date) {
+  if (requireDate && !date) {
     const error = new Error("date is required for custom transactions");
     error.status = 400;
     throw error;
@@ -231,7 +179,7 @@ export const createTransactionWithCustomDate = asyncHandler(async (req, res) => 
     categoryId,
   });
 
-  const customDate = normalizeToUtcMidnight(date);
+  const customDate = date ? normalizeToUtcMidnight(date) : undefined;
 
   const transaction = await Transaction.create({
     user: req.user._id,
@@ -241,12 +189,20 @@ export const createTransactionWithCustomDate = asyncHandler(async (req, res) => 
     category: categoryDoc.name,
     categoryId: categoryDoc._id,
     amount: numericAmount,
-    date: customDate,
+    ...(customDate ? { date: customDate } : {}),
     status: status || "active",
-    isCustomDate: true,
+    isCustomDate: Boolean(customDate),
   });
 
   res.status(201).json({ transaction: buildTransactionResponse(transaction) });
+};
+
+export const createTransaction = asyncHandler(async (req, res) => {
+  await handleCreateTransaction({ req, res, requireDate: false });
+});
+
+export const createTransactionWithCustomDate = asyncHandler(async (req, res) => {
+  await handleCreateTransaction({ req, res, requireDate: true });
 });
 
 export const getTransactions = asyncHandler(async (req, res) => {
