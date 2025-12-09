@@ -65,7 +65,8 @@ Protected routes read access tokens from HttpOnly cookies (CORS credentials enab
 - `POST /api/auth/logout` — clear auth cookies
 
 ### Categories
-- `GET /api/categories?type=income|expense&includeInactive=true` — list categories
+- `GET /api/categories/active?type=income|expense` — list all active categories (user + global); if `type` is provided, only that type
+- `GET /api/categories/all?type=income|expense` — list all categories (active + inactive, user + global); if `type` is provided, only that type
 - `POST /api/categories` — body: `name`, `type`
 - `PATCH /api/categories/:id` — body: `isDefault=true` to set the default category for that type (also updates user defaults)
 - `DELETE /api/categories/:id` — soft-archive (defaults cannot be removed)
@@ -86,3 +87,4 @@ Protected routes read access tokens from HttpOnly cookies (CORS credentials enab
 GitHub Actions workflow (`.github/workflows/deploy.yml`) deploys:
 - `dev` branch → staging 
 - `main` branch → production 
+
