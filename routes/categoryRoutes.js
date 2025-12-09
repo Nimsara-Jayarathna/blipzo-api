@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
-  listCategories,
+  listActiveCategories,
+  listAllCategories,
   createCategory,
   setDefaultCategory,
   archiveCategory,
@@ -11,7 +12,8 @@ const router = Router();
 
 router.use(protect);
 
-router.get("/", listCategories);
+router.get("/active", listActiveCategories);
+router.get("/all", listAllCategories);
 router.post("/", createCategory);
 router.patch("/:id", setDefaultCategory);
 router.delete("/:id", archiveCategory);

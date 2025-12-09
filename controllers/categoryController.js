@@ -13,28 +13,64 @@ const buildCategoryResponse = (category) => ({
   isActive: category.isActive,
   createdAt: category.createdAt,
   updatedAt: category.updatedAt,
+  isGlobal: !category.user,
 });
 
 const getLimitForUser = (user) => user?.categoryLimit ?? 10;
 
-export const listCategories = asyncHandler(async (req, res) => {
-  const { type, includeInactive } = req.query;
+export const listActiveCategories = asyncHandler(async (req, res) => {
+  const { type } = req.query;
 
-  const filter = { user: req.user._id };
+  if (type && !ALLOWED_TYPES.includes(type)) {
+    const error = new Error("type must be either income or expense");
+    error.status = 400;
+    throw error;
+  }
+
+  const filter = {
+    isActive: true,
+    $or: [{ user: req.user._id }, { user: null }],
+  };
+
   if (type) {
-    if (!ALLOWED_TYPES.includes(type)) {
-      const error = new Error("type must be either income or expense");
-      error.status = 400;
-      throw error;
-    }
     filter.type = type;
   }
 
-  if (includeInactive !== "true") {
-    filter.isActive = true;
+  const categories = await Category.find(filter).sort({
+    type: 1,
+    isDefault: -1,
+    name: 1,
+  });
+
+  res.json({
+    categories: categories.map(buildCategoryResponse),
+    limit: getLimitForUser(req.user),
+  });
+});
+
+export const listAllCategories = asyncHandler(async (req, res) => {
+  const { type } = req.query;
+
+  if (type && !ALLOWED_TYPES.includes(type)) {
+    const error = new Error("type must be either income or expense");
+    error.status = 400;
+    throw error;
   }
 
-  const categories = await Category.find(filter).sort({ name: 1 });
+  const filter = {
+    $or: [{ user: req.user._id }, { user: null }],
+  };
+
+  if (type) {
+    filter.type = type;
+  }
+
+  const categories = await Category.find(filter).sort({
+    type: 1,
+    isDefault: -1,
+    isActive: -1,
+    name: 1,
+  });
 
   res.json({
     categories: categories.map(buildCategoryResponse),
