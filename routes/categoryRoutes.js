@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   listCategories,
+  listAvailableCategories,
   createCategory,
   setDefaultCategory,
   archiveCategory,
@@ -11,6 +12,7 @@ const router = Router();
 
 router.use(protect);
 
+router.get("/available", listAvailableCategories);
 router.get("/", listCategories);
 router.post("/", createCategory);
 router.patch("/:id", setDefaultCategory);
