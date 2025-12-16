@@ -20,6 +20,49 @@ const normalizeToUtcMidnight = (value) => {
   return parsed;
 };
 
+const getTimezoneFromRequest = (req) => {
+  const headerTz = req.get("X-User-Timezone") || req.get("x-user-timezone");
+  const bodyTz = req.body?.timezone;
+  const queryTz = req.query?.timezone;
+  const timezone = headerTz || bodyTz || queryTz;
+
+  if (!timezone || typeof timezone !== "string") {
+    return undefined;
+  }
+
+  const trimmed = timezone.trim();
+  return trimmed || undefined;
+};
+
+const isValidTimeZone = (timeZone) => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone }).format();
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+const getLocalDateKey = (date, timeZone) => {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = formatter.formatToParts(date);
+  const values = {};
+
+  for (const part of parts) {
+    if (part.type === "year" || part.type === "month" || part.type === "day") {
+      values[part.type] = part.value;
+    }
+  }
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
 const deriveCategoryLookup = ({ category, categoryId }) => {
   const normalizedCategoryId =
     typeof categoryId === "string" ? categoryId.trim() : categoryId;
@@ -489,12 +532,40 @@ export const updateTransaction = asyncHandler(async (req, res) => {
 export const deleteTransaction = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const result = await Transaction.deleteOne({ _id: id, user: req.user._id });
-  if (result.deletedCount === 0) {
+  const timeZone = getTimezoneFromRequest(req);
+  if (!timeZone) {
+    const error = new Error("timezone is required");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!isValidTimeZone(timeZone)) {
+    const error = new Error("timezone must be a valid IANA time zone, e.g. America/New_York");
+    error.status = 400;
+    throw error;
+  }
+
+  const transaction = await Transaction.findOne({
+    _id: id,
+    user: req.user._id,
+  });
+
+  if (!transaction) {
     const error = new Error("Transaction not found");
     error.status = 404;
     throw error;
   }
+
+  const createdDateKey = getLocalDateKey(transaction.createdAt, timeZone);
+  const todayDateKey = getLocalDateKey(new Date(), timeZone);
+
+  if (createdDateKey !== todayDateKey) {
+    const error = new Error("Transaction can only be deleted on the day it was created.");
+    error.status = 400;
+    throw error;
+  }
+
+  await transaction.deleteOne();
 
   res.status(204).send();
 });
