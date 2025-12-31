@@ -1,15 +1,15 @@
 import bcrypt from "bcrypt";
-import User from "../models/User.js";
-import Category from "../models/Category.js";
-import { asyncHandler } from "../utils/errorHandler.js";
+import User from "../../models/User.js";
+import Category from "../../models/Category.js";
+import { asyncHandler } from "../../utils/errorHandler.js";
 import {
   clearAuthCookies,
   issueTokens,
   setAuthCookies,
   verifyAccessToken,
   verifyRefreshToken,
-} from "../utils/authTokens.js";
-import { getClientIp, getDeviceInfo, hashEmail, logger } from "../utils/logger.js";
+} from "../../utils/authTokens.js";
+import { getClientIp, getDeviceInfo, hashEmail, logger } from "../../utils/logger.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;
 

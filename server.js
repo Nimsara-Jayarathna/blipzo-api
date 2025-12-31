@@ -2,17 +2,15 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import connectDB from "./config/db.js";
-import authRoutes from "./routes/authRoutes.js";
-import transactionRoutes from "./routes/transactionRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js";
-import { notFound, errorHandler } from "./utils/errorHandler.js";
+import connectDB from "./src/config/db.js";
+import routes from "./src/api/v1/routes.js";
+import { notFound, errorHandler } from "./src/utils/errorHandler.js";
 import {
   getClientIp,
   getDeviceInfo,
   hashEmail,
   logger,
-} from "./utils/logger.js";
+} from "./src/utils/logger.js";
 
 dotenv.config();
 
@@ -21,8 +19,8 @@ const app = express();
 // Allow configuring CORS origins via comma-separated env var
 const corsOrigins = process.env.CLIENT_ORIGIN
   ? process.env.CLIENT_ORIGIN.split(",")
-      .map((origin) => origin.trim())
-      .filter(Boolean)
+    .map((origin) => origin.trim())
+    .filter(Boolean)
   : [];
 
 const corsOptions = {
@@ -75,9 +73,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", uptime: process.uptime() });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/transactions", transactionRoutes);
-app.use("/api/categories", categoryRoutes);
+app.use("/api/v1", routes);
 
 app.use(notFound);
 app.use(errorHandler);
