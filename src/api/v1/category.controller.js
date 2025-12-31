@@ -1,5 +1,5 @@
-import Category from "../models/Category.js";
-import { asyncHandler } from "../utils/errorHandler.js";
+import Category from "../../models/Category.js";
+import { asyncHandler } from "../../utils/errorHandler.js";
 
 const ALLOWED_TYPES = ["income", "expense"];
 

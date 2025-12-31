@@ -7,12 +7,11 @@ RESTful backend for blipzo that handles authentication, categories, transactions
 - Income/expense categories with limits, defaults, and soft-archive
 - Transactions with custom dates, status, and summaries (weekly/monthly/yearly)
 - Health check and basic error handling middleware
-- Docker + Docker Compose for local/dev parity
 
 ## Prerequisites
 - Node.js 20+
 - npm
-- MongoDB (local or remote) or Docker for `docker-compose`
+- MongoDB (local or remote)
 
 ## Setup
 1) Install dependencies
@@ -47,37 +46,11 @@ Prod cross-site (different subdomains): use `COOKIE_SAMESITE=none`, `COOKIE_SECU
 - Dev (nodemon): `npm run dev`
 - Prod mode: `npm start`
 
-## Run with Docker
-```bash
-docker compose up --build
-```
-This starts the API on `PORT` (default 5000) and a MongoDB container with a persisted volume.
-
 ## API overview
+
+Detailed documentation for API v1 endpoints can be found in [src/api/v1/README.md](src/api/v1/README.md).
+
 Protected routes read access tokens from HttpOnly cookies (CORS credentials enabled).
-
-### Auth
-- `POST /api/auth/register` — body: `fname`, `lname`, `email`, `password` (optional `name`)
-- `POST /api/auth/login` — body: `email`, `password`
-- `GET /api/auth/me` — current user profile
-- `GET /api/auth/session` — validate access cookie and return `{ user }`
-- `POST /api/auth/refresh` — rotate access/refresh cookies or 401/419
-- `POST /api/auth/logout` — clear auth cookies
-
-### Categories
-- `GET /api/categories/active?type=income|expense` — list all active categories (user + global); if `type` is provided, only that type
-- `GET /api/categories/all?type=income|expense` — list all categories (active + inactive, user + global); if `type` is provided, only that type
-- `POST /api/categories` — body: `name`, `type`
-- `PATCH /api/categories/:id` — body: `isDefault=true` to set the default category for that type (also updates user defaults)
-- `DELETE /api/categories/:id` — soft-archive (defaults cannot be removed)
-
-### Transactions
-- `POST /api/transactions` — body: `type`, `amount`, optional `category` or `categoryId`, `title`, `description`, `status`, optional `date` (uses provided date and marks `isCustomDate=true`)
-- `POST /api/transactions/custom` — same as above with `date` required
-- `GET /api/transactions?status=active|undone` — list for user
-- `GET /api/transactions/summary` — income/expense totals + weekly/monthly/yearly breakdowns
-- `PUT /api/transactions/:id` — update fields (type/category/date/etc.)
-- `DELETE /api/transactions/:id` — delete
 
 ### Misc
 - `GET /` — ping
