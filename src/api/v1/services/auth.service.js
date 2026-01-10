@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../../../models/User.js";
 import Category from "../../../models/Category.js";
+import Currency from "../../../models/Currency.js";
 import { hashEmail } from "../../../utils/logger.js";
 import { issueTokens, verifyAccessToken, verifyRefreshToken } from "../../../utils/authTokens.js";
 
@@ -46,6 +47,13 @@ export const registerUser = async ({ name, fname, lname, email, password }) => {
         password: hashedPassword,
     });
 
+    // Assign default currency
+    const defaultCurrency = await Currency.findOne({ isDefault: true });
+    if (defaultCurrency) {
+        user.currency = defaultCurrency._id;
+        await user.save();
+    }
+
     await ensureDefaultCategories(user._id);
 
     const tokens = issueTokens(user._id);
@@ -60,7 +68,7 @@ export const loginUser = async ({ email, password }) => {
         throw error;
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).populate("currency");
     if (!user) {
         const error = new Error("Invalid credentials");
         error.status = 401;
@@ -90,7 +98,7 @@ export const getUserSession = async (token) => {
     }
 
     const decoded = verifyAccessToken(token); // May throw TokenExpiredError
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await User.findById(decoded.userId).select("-password").populate("currency");
 
     if (!user) {
         const error = new Error("User not found for this token");
@@ -109,7 +117,7 @@ export const refreshUserSession = async (refreshToken) => {
     }
 
     const decoded = verifyRefreshToken(refreshToken); // May throw
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await User.findById(decoded.userId).select("-password").populate("currency");
 
     if (!user) {
         const error = new Error("User not found for this token");
@@ -137,4 +145,10 @@ export const sanitizeUser = (user) => ({
     categoryLimit: user.categoryLimit ?? 10,
     defaultIncomeCategories: user.defaultIncomeCategories,
     defaultExpenseCategories: user.defaultExpenseCategories,
+    currency: user.currency ? {
+        id: user.currency._id,
+        name: user.currency.name,
+        code: user.currency.code,
+        symbol: user.currency.symbol
+    } : null,
 });

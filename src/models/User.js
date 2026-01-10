@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: ["Stock"],
     },
+    currency: { type: mongoose.Schema.Types.ObjectId, ref: "Currency" },
   },
   { timestamps: true }
 );
