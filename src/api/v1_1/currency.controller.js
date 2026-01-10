@@ -2,7 +2,8 @@ import { asyncHandler } from "../../utils/errorHandler.js";
 import * as currencyService from "./services/currency.service.js";
 
 export const listCurrencies = asyncHandler(async (req, res) => {
-    const currencies = await currencyService.getAllCurrencies();
+    const userCurrencyId = req.user ? req.user.currency : null;
+    const currencies = await currencyService.getAllCurrencies(userCurrencyId);
     res.json({ currencies });
 });
 

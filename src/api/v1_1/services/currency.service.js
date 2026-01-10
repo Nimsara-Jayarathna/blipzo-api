@@ -1,8 +1,13 @@
 import Currency from "../../../models/Currency.js";
 import User from "../../../models/User.js";
 
-export const getAllCurrencies = async () => {
-    return Currency.find({}).sort({ name: 1 }); // List all, maybe filter by active if we had that, but User asked to remove isActive.
+export const getAllCurrencies = async (userCurrencyId) => {
+    const currencies = await Currency.find({}).sort({ name: 1 }).lean();
+
+    return currencies.map(currency => ({
+        ...currency,
+        isSelected: userCurrencyId && currency._id.toString() === userCurrencyId.toString()
+    }));
 };
 
 export const updateUserCurrency = async (userId, currencyId) => {
