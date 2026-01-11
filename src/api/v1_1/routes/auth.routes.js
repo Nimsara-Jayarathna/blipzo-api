@@ -14,6 +14,7 @@ router.post("/register/complete", authLimiter, authController.registerComplete);
 // Password Management
 router.post("/password/forgot", authLimiter, authController.forgotPassword);
 router.post("/password/reset", authLimiter, authController.resetPassword);
+router.post("/password/change", protect, authController.changePassword);
 
 // Email Change Flow
 router.post("/email/change/init", protect, authController.changeEmailInit);

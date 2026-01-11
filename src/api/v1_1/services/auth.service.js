@@ -6,7 +6,7 @@ import Token from "../../../models/Token.js";
 import Category from "../../../models/Category.js";
 import Currency from "../../../models/Currency.js";
 import { issueTokens, verifyAccessToken, verifyRefreshToken } from "../../../utils/authTokens.js";
-import { sendOtpEmail, sendPasswordResetEmail, sendChangeEmailVerification, sendWelcomeEmail } from "./email.service.js";
+import { sendOtpEmail, sendPasswordResetEmail, sendChangeEmailVerification, sendWelcomeEmail, sendPasswordChangeNotification } from "./email.service.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;
 const OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
@@ -156,6 +156,26 @@ export const resetPassword = async (token, newPassword) => {
 
     await Token.deleteOne({ _id: tokenRecord._id });
     return { message: "Password reset successfully" };
+};
+
+export const changePassword = async (userId, currentPassword, newPassword) => {
+    if (!currentPassword || !newPassword) throw { status: 400, message: "Current and new passwords are required" };
+
+    const user = await User.findById(userId);
+    if (!user) throw { status: 404, message: "User not found" };
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) throw { status: 401, message: "Incorrect current password" };
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Notify user of password change
+    const name = user.name || `${user.fname} ${user.lname}`.trim();
+    sendPasswordChangeNotification(user.email, name).catch(err => console.error("Failed to send password change alert:", err));
+
+    return { message: "Password changed successfully" };
 };
 
 // --- Change Email Flow ---

@@ -95,3 +95,17 @@ export const welcomeEmail = (name) => baseTemplate(`
     <a href="${process.env.CLIENT_URL || 'https://blipzo.xyz'}" class="action-button">Go to Dashboard</a>
   </div>
 `);
+
+export const passwordChanged = (name, resetLink) => baseTemplate(`
+  <h2>Password Changed</h2>
+  <p>Hi ${name},</p>
+  <p>The password for your Blipzo account was recently changed.</p>
+  <p>If you made this change, you can ignore this email.</p>
+  <p><strong>If you didn't allow this change, please reset your password immediately:</strong></p>
+  <br>
+  <div style="text-align: center;">
+    <a href="${resetLink}" class="action-button" style="background-color: #dc3545;">Secure My Account</a>
+  </div>
+  <p>Or paste this link into your browser:</p>
+  <p><a href="${resetLink}">${resetLink}</a></p>
+`);
