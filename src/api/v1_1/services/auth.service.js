@@ -62,6 +62,8 @@ export const verifyRegistrationOtp = async (email, otp) => {
     const tokenRecord = await Token.findOne({ email, token: otp, type: "register_otp" });
     if (!tokenRecord) throw { status: 400, message: "Invalid or expired OTP" };
 
+    await Token.deleteMany({ email, type: "registration_verified" });
+
     const regToken = generateToken();
     await Token.create({
         email,
@@ -115,10 +117,11 @@ export const completeRegistration = async ({ registrationToken, name, fname, lna
 export const requestPasswordReset = async (email) => {
     if (!email) throw { status: 400, message: "Email is required" };
     email = email.toLowerCase().trim();
+    console.log(`Debug forgotPassword: looking up ${email}`);
 
     const user = await User.findOne({ email });
     if (!user) {
-        return { message: "If that email exists, a reset link has been sent." };
+        throw { status: 404, message: "User not found" };
     }
 
     const resetToken = generateToken();
@@ -180,6 +183,8 @@ export const verifyCurrentEmail = async (userId, otp) => {
     const tokenRecord = await Token.findOne({ userId, token: otp, type: "email_change_current" });
     if (!tokenRecord) throw { status: 400, message: "Invalid or expired code" };
 
+    await Token.deleteMany({ userId, type: "email_change_verified" });
+
     const changeToken = generateToken();
     await Token.create({
         userId,
@@ -227,7 +232,7 @@ export const confirmNewEmail = async (userId, otp) => {
     await Token.deleteOne({ _id: tokenRecord._id });
     await Token.deleteMany({ userId, type: "email_change_verified" });
 
-    return { message: "Email updated successfully" };
+    return { message: "Email updated successfully", email: user.email };
 };
 
 export const sanitizeUser = (user) => ({
