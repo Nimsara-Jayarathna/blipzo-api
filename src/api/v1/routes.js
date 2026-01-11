@@ -17,6 +17,7 @@ router.post("/auth/logout", authController.logout);
 router.get("/auth/me", protect, authController.getProfile);
 
 
+
 // Category Routes
 const categoryRouter = Router();
 categoryRouter.use(protect);
