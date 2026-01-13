@@ -5,7 +5,7 @@ import User from "../../../models/User.js";
 import Token from "../../../models/Token.js";
 import Category from "../../../models/Category.js";
 import Currency from "../../../models/Currency.js";
-import { issueTokens, verifyAccessToken, verifyRefreshToken } from "../../../utils/authTokens.js";
+import { issueTokens } from "../../../utils/authTokens.js";
 import { sendOtpEmail, sendPasswordResetEmail, sendChangeEmailVerification, sendWelcomeEmail, sendPasswordChangeNotification } from "./email.service.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;

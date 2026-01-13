@@ -23,7 +23,7 @@ const isValidTimeZone = (timeZone) => {
     try {
         new Intl.DateTimeFormat("en-US", { timeZone }).format();
         return true;
-    } catch (error) {
+    } catch {
         return false;
     }
 };

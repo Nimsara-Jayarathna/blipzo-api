@@ -4,7 +4,7 @@ import User from "../../../models/User.js";
 import Category from "../../../models/Category.js";
 import Currency from "../../../models/Currency.js";
 
-import { hashEmail, logger } from "../../../utils/logger.js";
+
 import { issueTokens, verifyAccessToken, verifyRefreshToken } from "../../../utils/authTokens.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;

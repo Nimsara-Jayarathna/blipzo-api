@@ -1,7 +1,7 @@
 export const asyncHandler = (handler) => (req, res, next) =>
   Promise.resolve(handler(req, res, next)).catch(next);
 
-export const notFound = (req, res, next) => {
+export const notFound = (req, _res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   error.status = 404;
   next(error);
