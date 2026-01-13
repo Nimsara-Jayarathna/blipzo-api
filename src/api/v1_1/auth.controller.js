@@ -36,7 +36,7 @@ export const registerComplete = asyncHandler(async (req, res) => {
 // --- Password Management ---
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-    const result = await authService.requestPasswordReset(req.body.email);
+    const result = await authService.requestPasswordReset(req.body.email, req.body.platform);
     res.status(200).json(result);
 });
 

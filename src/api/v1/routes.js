@@ -15,6 +15,7 @@ router.get("/auth/session", authController.getSession);
 router.post("/auth/refresh", authController.refreshSession);
 router.post("/auth/logout", authController.logout);
 router.get("/auth/me", protect, authController.getProfile);
+router.get("/auth/me", protect, authController.getProfile);
 
 
 

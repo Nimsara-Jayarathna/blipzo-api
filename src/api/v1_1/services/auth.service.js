@@ -114,14 +114,21 @@ export const completeRegistration = async ({ registrationToken, name, fname, lna
 
 // --- Password Management ---
 
-export const requestPasswordReset = async (email) => {
+export const requestPasswordReset = async (email, platform) => {
     if (!email) throw { status: 400, message: "Email is required" };
     email = email.toLowerCase().trim();
-    console.log(`Debug forgotPassword: looking up ${email}`);
+    // Validate Platform
+    let targetPlatform = platform ? platform.toLowerCase().trim() : "web";
+    const supportedPlatforms = ["mobile", "web"];
+
+    if (!supportedPlatforms.includes(targetPlatform)) {
+        throw { status: 400, message: "Invalid platform. Allowed values: 'mobile', 'web'" };
+    }
 
     const user = await User.findOne({ email });
     if (!user) {
-        throw { status: 404, message: "User not found" };
+        // Return success even if user not found to prevent enumeration
+        return { message: "If that email exists, a reset link has been sent." };
     }
 
     const resetToken = generateToken();
@@ -135,8 +142,22 @@ export const requestPasswordReset = async (email) => {
         expiresAt: new Date(Date.now() + 3600000)
     });
 
-    const link = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+    // Platform specific URL
+    let link;
+    if (targetPlatform === "mobile") {
+        const appScheme = process.env.MB_APP_URI_SCHEME || "blipzoapp";
+        link = `${appScheme}://auth/reset-password?token=${resetToken}`;
+    } else {
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+        link = `${clientUrl}/reset-password?token=${resetToken}`;
+    }
+
     await sendPasswordResetEmail(email, link);
+
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`[DEV] Reset Token for ${email}: ${resetToken}`);
+        console.log(`[DEV] Reset Link: ${link}`);
+    }
 
     return { message: "If that email exists, a reset link has been sent." };
 };
