@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const userSchema = new mongoose.Schema(
   {
@@ -17,6 +18,8 @@ const userSchema = new mongoose.Schema(
       default: ["Stock"],
     },
     currency: { type: mongoose.Schema.Types.ObjectId, ref: "Currency" },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   { timestamps: true }
 );
@@ -25,5 +28,18 @@ userSchema.virtual("fullName").get(function fullName() {
   if (this.name) return this.name;
   return `${this.fname} ${this.lname}`.trim();
 });
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  return resetToken;
+};
 
 export default mongoose.model("User", userSchema);

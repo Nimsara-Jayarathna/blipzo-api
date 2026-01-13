@@ -8,6 +8,7 @@ import v1_1Routes from "./src/api/v1_1/routes.js";
 import { logger } from "./src/utils/logger.js";
 import { seedCurrencies } from "./src/utils/seedCurrencies.js";
 import { notFound, errorHandler } from "./src/utils/errorHandler.js";
+import { startTokenCleanup } from "./src/services/cron.service.js";
 import {
   getClientIp,
   getDeviceInfo,
@@ -98,6 +99,7 @@ const startServer = async () => {
   try {
     await connectDB();
     await seedCurrencies();
+    startTokenCleanup();
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (error) {
