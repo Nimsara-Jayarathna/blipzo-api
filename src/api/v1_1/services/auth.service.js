@@ -106,7 +106,8 @@ export const completeRegistration = async ({ registrationToken, name, fname, lna
     await Token.deleteOne({ _id: tokenRecord._id });
 
     // Send Welcome Email (Fire and forget)
-    sendWelcomeEmail(user.email, user.name).catch(err => console.error("Failed to send welcome email:", err));
+    const displayName = user.name || `${user.fname} ${user.lname}`.trim();
+    sendWelcomeEmail(user.email, displayName).catch(err => console.error("Failed to send welcome email:", err));
 
     const tokens = issueTokens(user._id);
     return { user, tokens };
