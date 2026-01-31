@@ -6,3 +6,4 @@ v1.json
 docs/API_REFERENCE.md
 prod.env.b64
 staging.env.b64
+stg.env.b64
