@@ -105,8 +105,30 @@ build_image:
           exit 1
         fi
 
-        # Ensure external proxy network exists if referenced
-        docker network inspect npm_default >/dev/null 2>&1 || docker network create npm_default
+        NPM_NET_NAME="${NPM_NET_NAME:-npm_default}"
+        NPM_NET_SUBNET="${NPM_NET_SUBNET:-172.18.0.0/16}"
+        NPM_NET_GATEWAY="${NPM_NET_GATEWAY:-172.18.0.1}"
+        if docker network inspect "$NPM_NET_NAME" >/dev/null 2>&1; then
+          EXISTING_SUBNET="$(docker network inspect -f '{{(index .IPAM.Config 0).Subnet}}' "$NPM_NET_NAME" 2>/dev/null || true)"
+          if [ -n "$EXISTING_SUBNET" ] && [ "$EXISTING_SUBNET" != "$NPM_NET_SUBNET" ]; then
+            echo "Warning: $NPM_NET_NAME subnet is $EXISTING_SUBNET (expected $NPM_NET_SUBNET)" >&2
+          fi
+        else
+          docker network create --driver bridge --subnet "$NPM_NET_SUBNET" --gateway "$NPM_NET_GATEWAY" "$NPM_NET_NAME"
+        fi
+
+        DEFAULT_PROJECT_NAME="$(basename "$APP_DIR")"
+        INTERNAL_NET_NAME="${INTERNAL_NET_NAME:-${COMPOSE_PROJECT_NAME:-$DEFAULT_PROJECT_NAME}_blipzo_internal}"
+        INTERNAL_NET_SUBNET="${INTERNAL_NET_SUBNET:-172.19.0.0/16}"
+        INTERNAL_NET_GATEWAY="${INTERNAL_NET_GATEWAY:-172.19.0.1}"
+        if docker network inspect "$INTERNAL_NET_NAME" >/dev/null 2>&1; then
+          EXISTING_SUBNET="$(docker network inspect -f '{{(index .IPAM.Config 0).Subnet}}' "$INTERNAL_NET_NAME" 2>/dev/null || true)"
+          if [ -n "$EXISTING_SUBNET" ] && [ "$EXISTING_SUBNET" != "$INTERNAL_NET_SUBNET" ]; then
+            echo "Warning: $INTERNAL_NET_NAME subnet is $EXISTING_SUBNET (expected $INTERNAL_NET_SUBNET)" >&2
+          fi
+        else
+          docker network create --driver bridge --internal --subnet "$INTERNAL_NET_SUBNET" --gateway "$INTERNAL_NET_GATEWAY" "$INTERNAL_NET_NAME"
+        fi
 
         if [ -n "$REGISTRY" ] && [ -n "$REGISTRY_USER" ] && [ -n "$REGISTRY_PASSWORD" ]; then
           echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USER" --password-stdin "$REGISTRY"
