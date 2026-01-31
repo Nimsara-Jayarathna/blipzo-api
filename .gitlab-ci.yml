@@ -53,7 +53,7 @@ build_image:
     - export SSH_OPTS="-i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes"
   script:
     - |
-        ssh $SSH_OPTS -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_DIR'"
+        ssh $SSH_OPTS -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "sudo mkdir -p '$APP_DIR' && sudo chown '$SSH_USER:$SSH_USER' '$APP_DIR'"
     - |
         rsync -az --delete \
           --exclude '.git' \
@@ -76,7 +76,8 @@ build_image:
         REGISTRY_USER="${REGISTRY_USER:-}"
         REGISTRY_PASSWORD="${REGISTRY_PASSWORD:-}"
         COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-}"
-        mkdir -p "$APP_DIR"
+        sudo mkdir -p "$APP_DIR"
+        sudo chown "$SSH_USER:$SSH_USER" "$APP_DIR"
         cd "$APP_DIR"
 
         if ! command -v docker >/dev/null 2>&1; then
