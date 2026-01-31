@@ -76,6 +76,7 @@ build_image:
         REGISTRY_USER="${REGISTRY_USER:-}"
         REGISTRY_PASSWORD="${REGISTRY_PASSWORD:-}"
         COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-}"
+        export IMAGE
         sudo mkdir -p "$APP_DIR"
         sudo chown "$SSH_USER:$SSH_USER" "$APP_DIR"
         cd "$APP_DIR"
