@@ -116,10 +116,6 @@ deploy_stg:
     - if: '$CI_COMMIT_BRANCH == "release/1.1"'
   variables:
     APP_DIR: /var/www/blipzo-api-staging
-    SSH_HOST: $SSH_HOST
-    SSH_USER: $SSH_USER
-    SSH_PORT: $SSH_PORT
-    SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
     ENV_FILE_B64: $STG_ENV_FILE_B64
     IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     COMPOSE_PROJECT_NAME: blipzo-stg
@@ -133,10 +129,6 @@ deploy_prod:
     - if: '$CI_COMMIT_BRANCH == "main"'
   variables:
     APP_DIR: /var/www/blipzo-api
-    SSH_HOST: $SSH_HOST
-    SSH_USER: $SSH_USER
-    SSH_PORT: $SSH_PORT
-    SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
     ENV_FILE_B64: $PROD_ENV_FILE_B64
     IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     COMPOSE_PROJECT_NAME: blipzo-prod
