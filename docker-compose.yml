@@ -8,8 +8,8 @@ services:
       PORT: ${CONTAINER_PORT}
       MONGO_URI: ${MONGO_URI}
       MONGO_DB_NAME: ${MONGO_DB_NAME}
-    ports:
-      - "${API_HOST_PORT}:${CONTAINER_PORT}"
+    expose:
+      - "${CONTAINER_PORT}"
     depends_on:
       - mongodb
     networks:
@@ -20,6 +20,8 @@ services:
   mongodb:
     image: mongo:7
     restart: unless-stopped
+    expose:
+      - "27017"
     volumes:
       - mongo-data:/data/db
     networks:
