@@ -114,6 +114,19 @@ build_image:
             echo "Warning: $NPM_NET_NAME subnet is $EXISTING_SUBNET (expected $NPM_NET_SUBNET)" >&2
           fi
         else
+          CONFLICT_NET=""
+          for net_id in $(docker network ls -q); do
+            net_name="$(docker network inspect -f '{{.Name}}' "$net_id" 2>/dev/null || true)"
+            net_subnet="$(docker network inspect -f '{{(index .IPAM.Config 0).Subnet}}' "$net_id" 2>/dev/null || true)"
+            if [ -n "$net_subnet" ] && [ "$net_subnet" = "$NPM_NET_SUBNET" ] && [ "$net_name" != "$NPM_NET_NAME" ]; then
+              CONFLICT_NET="$net_name"
+              break
+            fi
+          done
+          if [ -n "$CONFLICT_NET" ]; then
+            echo "Error: subnet $NPM_NET_SUBNET already in use by network $CONFLICT_NET" >&2
+            exit 1
+          fi
           docker network create --driver bridge --subnet "$NPM_NET_SUBNET" --gateway "$NPM_NET_GATEWAY" "$NPM_NET_NAME"
         fi
 
@@ -127,6 +140,19 @@ build_image:
             echo "Warning: $INTERNAL_NET_NAME subnet is $EXISTING_SUBNET (expected $INTERNAL_NET_SUBNET)" >&2
           fi
         else
+          CONFLICT_NET=""
+          for net_id in $(docker network ls -q); do
+            net_name="$(docker network inspect -f '{{.Name}}' "$net_id" 2>/dev/null || true)"
+            net_subnet="$(docker network inspect -f '{{(index .IPAM.Config 0).Subnet}}' "$net_id" 2>/dev/null || true)"
+            if [ -n "$net_subnet" ] && [ "$net_subnet" = "$INTERNAL_NET_SUBNET" ] && [ "$net_name" != "$INTERNAL_NET_NAME" ]; then
+              CONFLICT_NET="$net_name"
+              break
+            fi
+          done
+          if [ -n "$CONFLICT_NET" ]; then
+            echo "Error: subnet $INTERNAL_NET_SUBNET already in use by network $CONFLICT_NET" >&2
+            exit 1
+          fi
           docker network create --driver bridge --internal --subnet "$INTERNAL_NET_SUBNET" --gateway "$INTERNAL_NET_GATEWAY" "$INTERNAL_NET_NAME"
         fi
 
