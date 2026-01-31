@@ -4,7 +4,7 @@ stages:
 
 workflow:
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release/1.1"'
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
     - when: never
 
 build_image:
@@ -21,7 +21,7 @@ build_image:
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release/1.1"'
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
 
 .deploy_template:
   stage: deploy
@@ -128,7 +128,7 @@ deploy_stg:
     name: stg
   resource_group: blipzo-api-stg
   rules:
-    - if: '$CI_COMMIT_BRANCH == "release/1.1"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
   variables:
     APP_DIR: /var/www/blipzo-api-staging
     ENV_FILE_B64: $STG_ENV_FILE_B64
