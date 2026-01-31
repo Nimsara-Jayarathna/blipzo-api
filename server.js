@@ -4,13 +4,20 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
 import routes from "./src/api/v1/routes.js";
+import v1_1Routes from "./src/api/v1_1/routes.js";
+import { logger } from "./src/utils/logger.js";
+import { seedCurrencies } from "./src/utils/seedCurrencies.js";
 import { notFound, errorHandler } from "./src/utils/errorHandler.js";
+import { startTokenCleanup } from "./src/services/cron.service.js";
 import {
   getClientIp,
   getDeviceInfo,
   hashEmail,
-  logger,
 } from "./src/utils/logger.js";
+import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import hpp from "hpp";
+import { globalLimiter } from "./src/middleware/rateLimiter.js";
 
 dotenv.config();
 
@@ -28,11 +35,18 @@ const corsOptions = {
   credentials: true, // enable cookie/auth headers
 };
 
+app.use(helmet());
 app.use(cors(corsOptions));
+app.use(globalLimiter);
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  req.body = mongoSanitize.sanitize(req.body);
+  next();
+});
+app.use(hpp());
 
 app.use((req, res, next) => {
   const start = process.hrtime.bigint();
@@ -65,6 +79,8 @@ app.use((req, res, next) => {
   next();
 });
 
+
+
 app.get("/", (req, res) => {
   res.send("Blipzo API is running.");
 });
@@ -74,6 +90,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/v1", routes);
+app.use("/api/v1.1", v1_1Routes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -83,6 +100,9 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
+    await seedCurrencies();
+    startTokenCleanup();
+
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (error) {
     console.error("Failed to start server:", error);

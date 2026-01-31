@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  api:
+    image: ${IMAGE}
+    env_file: .env
+    environment:
+      PORT: ${CONTAINER_PORT}
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
+    expose:
+      - "${CONTAINER_PORT}"
+    depends_on:
+      - mongodb
+    networks:
+      - blipzo_internal
+      - npm_default
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    expose:
+      - "27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - blipzo_internal
+
+volumes:
+  mongo-data:
+
+networks:
+  blipzo_internal:
+    driver: bridge
+    internal: true
+  npm_default:
+    external: true

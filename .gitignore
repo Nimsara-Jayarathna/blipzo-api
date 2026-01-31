@@ -1,2 +1,9 @@
-.env
+*.env
 /node_modules
+
+v1.json
+.DS_Store
+docs/API_REFERENCE.md
+prod.env.b64
+staging.env.b64
+stg.env.b64
