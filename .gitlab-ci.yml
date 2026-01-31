@@ -92,9 +92,9 @@ build_image:
         fi
 
         if docker compose version >/dev/null 2>&1; then
-          DC="sudo -E docker compose"
+          DC="sudo docker compose"
         elif command -v docker-compose >/dev/null 2>&1; then
-          DC="sudo -E docker-compose"
+          DC="sudo docker-compose"
         else
           echo "Docker Compose not available" >&2
           exit 1
@@ -108,11 +108,11 @@ build_image:
         fi
 
         if [ -n "$COMPOSE_PROJECT_NAME" ]; then
-          $DC -p "$COMPOSE_PROJECT_NAME" -f docker-compose.yml pull
-          $DC -p "$COMPOSE_PROJECT_NAME" -f docker-compose.yml up -d
+          IMAGE="$IMAGE" $DC -p "$COMPOSE_PROJECT_NAME" -f docker-compose.yml pull
+          IMAGE="$IMAGE" $DC -p "$COMPOSE_PROJECT_NAME" -f docker-compose.yml up -d
         else
-          $DC -f docker-compose.yml pull
-          $DC -f docker-compose.yml up -d
+          IMAGE="$IMAGE" $DC -f docker-compose.yml pull
+          IMAGE="$IMAGE" $DC -f docker-compose.yml up -d
         fi
         sudo docker image prune -f
         EOF
