@@ -97,19 +97,19 @@ build_image:
         fi
 
         if docker compose version >/dev/null 2>&1; then
-          DC="sudo docker compose"
+          DC="docker compose"
         elif command -v docker-compose >/dev/null 2>&1; then
-          DC="sudo docker-compose"
+          DC="docker-compose"
         else
           echo "Docker Compose not available" >&2
           exit 1
         fi
 
         # Ensure external proxy network exists if referenced
-        sudo docker network inspect npm_default >/dev/null 2>&1 || sudo docker network create npm_default
+        docker network inspect npm_default >/dev/null 2>&1 || docker network create npm_default
 
         if [ -n "$REGISTRY" ] && [ -n "$REGISTRY_USER" ] && [ -n "$REGISTRY_PASSWORD" ]; then
-          echo "$REGISTRY_PASSWORD" | sudo docker login -u "$REGISTRY_USER" --password-stdin "$REGISTRY"
+          echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USER" --password-stdin "$REGISTRY"
         fi
 
         if [ -n "$COMPOSE_PROJECT_NAME" ]; then
@@ -119,7 +119,7 @@ build_image:
           IMAGE="$IMAGE" $DC -f docker-compose.yml pull
           IMAGE="$IMAGE" $DC -f docker-compose.yml up -d
         fi
-        sudo docker image prune -f
+        docker image prune -f
         EOF
 
 deploy_stg:
