@@ -111,9 +111,17 @@ build_image:
         fi
 
         DEFAULT_PROJECT_NAME="$(basename "$APP_DIR")"
-        INTERNAL_NET_NAME="${INTERNAL_NET_NAME:-${COMPOSE_PROJECT_NAME:-$DEFAULT_PROJECT_NAME}_blipzo_internal}"
-        if ! docker network inspect "$INTERNAL_NET_NAME" >/dev/null 2>&1; then
-          docker network create --driver bridge --internal "$INTERNAL_NET_NAME"
+        EXPECTED_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$DEFAULT_PROJECT_NAME}"
+        INTERNAL_NET_NAME="${INTERNAL_NET_NAME:-${EXPECTED_PROJECT_NAME}_blipzo_internal}"
+        if docker network inspect "$INTERNAL_NET_NAME" >/dev/null 2>&1; then
+          LABEL_NETWORK="$(docker network inspect -f '{{index .Labels "com.docker.compose.network"}}' "$INTERNAL_NET_NAME" 2>/dev/null || true)"
+          LABEL_PROJECT="$(docker network inspect -f '{{index .Labels "com.docker.compose.project"}}' "$INTERNAL_NET_NAME" 2>/dev/null || true)"
+          if [ "$LABEL_NETWORK" != "blipzo_internal" ] || [ "$LABEL_PROJECT" != "$EXPECTED_PROJECT_NAME" ]; then
+            for container_id in $(docker network inspect -f '{{range $id, $_ := .Containers}}{{println $id}}{{end}}' "$INTERNAL_NET_NAME"); do
+              docker rm -f "$container_id"
+            done
+            docker network rm "$INTERNAL_NET_NAME"
+          fi
         fi
 
         if [ -n "$REGISTRY" ] && [ -n "$REGISTRY_USER" ] && [ -n "$REGISTRY_PASSWORD" ]; then
