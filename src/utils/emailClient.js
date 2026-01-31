@@ -1,5 +1,5 @@
 import SibApiV3Sdk from "sib-api-v3-sdk";
-import { logger } from "./logger.js";
+import { hashEmail, logger } from "./logger.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -23,11 +23,34 @@ export const sendEmail = async ({ to, subject, htmlContent }) => {
     sendSmtpEmail.sender = { name: "Blipzo", email: process.env.EMAIL_FROM || "no-reply@blipzo.xyz" };
     sendSmtpEmail.to = [{ email: to }];
 
+    const toHash = hashEmail(to);
+    logger.info({
+        event: "email_send_attempt",
+        provider: "brevo",
+        subject,
+        toHash,
+    });
+
     try {
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
-        logger.info(`Email sent to ${to}`);
+        const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        logger.info({
+            event: "email_send_success",
+            provider: "brevo",
+            subject,
+            toHash,
+            messageId: data?.messageId,
+        });
     } catch (error) {
-        logger.error("Error sending email:", error);
+        logger.error({
+            event: "email_send_failure",
+            provider: "brevo",
+            subject,
+            toHash,
+            message: error?.message,
+            code: error?.code,
+            status: error?.status || error?.response?.statusCode,
+            responseBody: error?.response?.body,
+        });
         throw new Error("Email could not be sent");
     }
 };
