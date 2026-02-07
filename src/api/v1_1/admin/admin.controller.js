@@ -14,6 +14,15 @@ import {
   updateAdminUserById,
 } from "./services/adminUsers.service.js";
 import {
+  createAdminCurrency,
+  getAdminCurrencies,
+  getAdminCurrencyById,
+  parseCurrenciesQuery,
+  setAdminCurrencyDefault,
+  toggleAdminCurrencyStatus,
+  updateAdminCurrencyById,
+} from "./services/adminCurrencies.service.js";
+import {
   authenticateAdmin,
   clearAdminCookie,
   getAccessTokenTtlSeconds,
@@ -170,6 +179,85 @@ export const userActivity = asyncHandler(async (req, res) => {
     if (!error.status) {
       error.status = 500;
       error.message = "Unable to load user activity.";
+    }
+    throw error;
+  }
+});
+
+export const currencies = asyncHandler(async (req, res) => {
+  const query = parseCurrenciesQuery(req.query || {});
+  try {
+    const payload = await getAdminCurrencies(query);
+    return sendAdminSuccess(req, res, payload, "Currencies loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load currencies.";
+    }
+    throw error;
+  }
+});
+
+export const currencyById = asyncHandler(async (req, res) => {
+  try {
+    const payload = await getAdminCurrencyById(req.params.id);
+    return sendAdminSuccess(req, res, payload, "Currency loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load currency.";
+    }
+    throw error;
+  }
+});
+
+export const createCurrency = asyncHandler(async (req, res) => {
+  try {
+    const payload = await createAdminCurrency(req.body || {});
+    return sendAdminSuccess(req, res, payload, "Currency created.", 201);
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to create currency.";
+    }
+    throw error;
+  }
+});
+
+export const updateCurrency = asyncHandler(async (req, res) => {
+  try {
+    const payload = await updateAdminCurrencyById(req.params.id, req.body || {});
+    return sendAdminSuccess(req, res, payload, "Currency updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to update currency.";
+    }
+    throw error;
+  }
+});
+
+export const setCurrencyDefault = asyncHandler(async (req, res) => {
+  try {
+    const payload = await setAdminCurrencyDefault(req.params.id);
+    return sendAdminSuccess(req, res, payload, "Default currency updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to set default currency.";
+    }
+    throw error;
+  }
+});
+
+export const toggleCurrencyStatus = asyncHandler(async (req, res) => {
+  try {
+    const payload = await toggleAdminCurrencyStatus(req.params.id, req.body?.isActive);
+    return sendAdminSuccess(req, res, payload, "Currency status updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to update currency status.";
     }
     throw error;
   }

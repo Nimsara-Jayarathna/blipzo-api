@@ -18,5 +18,11 @@ router.patch("/users/:id", requireAdminAuth, adminController.updateUser);
 router.post("/users/:id/reset-password", requireAdminAuth, adminController.resetUserPassword);
 router.post("/users/:id/force-logout", requireAdminAuth, adminController.forceLogoutUser);
 router.get("/users/:id/activity", requireAdminAuth, adminController.userActivity);
+router.get("/currencies", requireAdminAuth, adminController.currencies);
+router.get("/currencies/:id", requireAdminAuth, adminController.currencyById);
+router.post("/currencies", requireAdminAuth, adminController.createCurrency);
+router.patch("/currencies/:id", requireAdminAuth, adminController.updateCurrency);
+router.post("/currencies/:id/set-default", requireAdminAuth, adminController.setCurrencyDefault);
+router.post("/currencies/:id/toggle-status", requireAdminAuth, adminController.toggleCurrencyStatus);
 
 export default router;
