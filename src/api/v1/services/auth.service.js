@@ -1,30 +1,13 @@
 
 import bcrypt from "bcrypt";
 import User from "../../../models/User.js";
-import Category from "../../../models/Category.js";
 import Currency from "../../../models/Currency.js";
+import { ensureUserDefaultCategories, getCategoryRegistrationDefaults } from "../../../services/categoryDefaults.js";
 
 
 import { issueTokens, verifyAccessToken, verifyRefreshToken } from "../../../utils/authTokens.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;
-
-const ensureDefaultCategories = async (userId) => {
-    const defaults = [
-        { name: "Sales", type: "income" },
-        { name: "Stock", type: "expense" },
-    ];
-
-    await Promise.all(
-        defaults.map((entry) =>
-            Category.findOneAndUpdate(
-                { user: userId, name: entry.name, type: entry.type },
-                { $setOnInsert: { isDefault: true }, $set: { isActive: true } },
-                { upsert: true, new: true, setDefaultsOnInsert: true }
-            )
-        )
-    );
-};
 
 export const registerUser = async ({ name, fname, lname, email, password }) => {
     if (!fname || !lname || !email || !password) {
@@ -41,6 +24,7 @@ export const registerUser = async ({ name, fname, lname, email, password }) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    const defaults = await getCategoryRegistrationDefaults();
     const user = await User.create({
         name,
         fname,
@@ -49,6 +33,9 @@ export const registerUser = async ({ name, fname, lname, email, password }) => {
         password: hashedPassword,
         status: "ACTIVE",
         tokenVersion: 0,
+        categoryLimit: defaults.categoryLimit,
+        defaultIncomeCategories: [defaults.incomeName],
+        defaultExpenseCategories: [defaults.expenseName],
     });
 
     // Assign default currency
@@ -58,7 +45,7 @@ export const registerUser = async ({ name, fname, lname, email, password }) => {
         await user.save();
     }
 
-    await ensureDefaultCategories(user._id);
+    await ensureUserDefaultCategories(user._id, defaults.incomeName, defaults.expenseName);
 
     const tokens = issueTokens(user._id, user.tokenVersion || 0);
 
@@ -86,8 +73,8 @@ export const loginUser = async ({ email, password }) => {
         throw error;
     }
 
-    // Ensure default categories exist (in case of legacy users or manual db edits)
-    await ensureDefaultCategories(user._id);
+    const defaults = await getCategoryRegistrationDefaults();
+    await ensureUserDefaultCategories(user._id, defaults.incomeName, defaults.expenseName);
 
     user.lastLoginAt = new Date();
     await user.save();

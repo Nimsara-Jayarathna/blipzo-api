@@ -24,5 +24,11 @@ router.post("/currencies", requireAdminAuth, adminController.createCurrency);
 router.patch("/currencies/:id", requireAdminAuth, adminController.updateCurrency);
 router.post("/currencies/:id/set-default", requireAdminAuth, adminController.setCurrencyDefault);
 router.post("/currencies/:id/toggle-status", requireAdminAuth, adminController.toggleCurrencyStatus);
+router.get("/categories", requireAdminAuth, adminController.categories);
+router.post("/categories", requireAdminAuth, adminController.createCategory);
+router.patch("/categories/:id", requireAdminAuth, adminController.updateCategory);
+router.post("/categories/:id/set-default", requireAdminAuth, adminController.setCategoryDefault);
+router.delete("/categories/:id", requireAdminAuth, adminController.deleteCategory);
+router.patch("/categories/settings", requireAdminAuth, adminController.updateCategorySettings);
 
 export default router;

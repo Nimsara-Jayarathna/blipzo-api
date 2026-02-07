@@ -23,6 +23,15 @@ import {
   updateAdminCurrencyById,
 } from "./services/adminCurrencies.service.js";
 import {
+  createAdminCategory,
+  deleteAdminCategory,
+  listAdminCategories,
+  parseAdminCategoriesQuery,
+  setAdminDefaultCategory,
+  updateAdminCategory,
+  updateAdminCategoryLimit,
+} from "./services/adminCategories.service.js";
+import {
   authenticateAdmin,
   clearAdminCookie,
   getAccessTokenTtlSeconds,
@@ -258,6 +267,85 @@ export const toggleCurrencyStatus = asyncHandler(async (req, res) => {
     if (!error.status) {
       error.status = 500;
       error.message = "Unable to update currency status.";
+    }
+    throw error;
+  }
+});
+
+export const categories = asyncHandler(async (req, res) => {
+  const query = parseAdminCategoriesQuery(req.query || {});
+  try {
+    const payload = await listAdminCategories(query);
+    return sendAdminSuccess(req, res, payload, "Categories loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load categories.";
+    }
+    throw error;
+  }
+});
+
+export const createCategory = asyncHandler(async (req, res) => {
+  try {
+    const payload = await createAdminCategory(req.body || {}, req.admin?.email || null);
+    return sendAdminSuccess(req, res, payload, "Category created.", 201);
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to create category.";
+    }
+    throw error;
+  }
+});
+
+export const updateCategory = asyncHandler(async (req, res) => {
+  try {
+    const payload = await updateAdminCategory(req.params.id, req.body || {}, req.admin?.email || null);
+    return sendAdminSuccess(req, res, payload, "Category updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to update category.";
+    }
+    throw error;
+  }
+});
+
+export const setCategoryDefault = asyncHandler(async (req, res) => {
+  try {
+    const payload = await setAdminDefaultCategory(req.params.id, req.admin?.email || null);
+    return sendAdminSuccess(req, res, payload, "Default category updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to update default category.";
+    }
+    throw error;
+  }
+});
+
+export const deleteCategory = asyncHandler(async (req, res) => {
+  try {
+    const payload = await deleteAdminCategory(req.params.id);
+    return sendAdminSuccess(req, res, payload, "Category deleted.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to delete category.";
+    }
+    throw error;
+  }
+});
+
+export const updateCategorySettings = asyncHandler(async (req, res) => {
+  try {
+    const payload = await updateAdminCategoryLimit(req.body?.defaultCategoryLimit, req.admin?.email || null);
+    return sendAdminSuccess(req, res, payload, "Category settings updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to update category settings.";
     }
     throw error;
   }
