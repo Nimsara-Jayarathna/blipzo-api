@@ -1,6 +1,10 @@
 import { asyncHandler } from "../../../utils/errorHandler.js";
 import { sendAdminSuccess } from "./utils/adminResponse.js";
 import {
+  getDashboardSnapshot,
+  parseDashboardQuery,
+} from "./services/adminDashboard.service.js";
+import {
   authenticateAdmin,
   clearAdminCookie,
   getAccessTokenTtlSeconds,
@@ -60,4 +64,19 @@ export const session = asyncHandler(async (req, res) => {
 export const logout = asyncHandler(async (req, res) => {
   clearAdminCookie(res);
   return sendAdminSuccess(req, res, {}, "Logged out successfully.");
+});
+
+export const dashboard = asyncHandler(async (req, res) => {
+  const query = parseDashboardQuery(req.query || {});
+
+  try {
+    const snapshot = await getDashboardSnapshot(query);
+    return sendAdminSuccess(req, res, snapshot, "Dashboard snapshot loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load dashboard snapshot.";
+    }
+    throw error;
+  }
 });
