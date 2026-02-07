@@ -30,5 +30,13 @@ router.patch("/categories/:id", requireAdminAuth, adminController.updateCategory
 router.post("/categories/:id/set-default", requireAdminAuth, adminController.setCategoryDefault);
 router.delete("/categories/:id", requireAdminAuth, adminController.deleteCategory);
 router.patch("/categories/settings", requireAdminAuth, adminController.updateCategorySettings);
+router.get("/system", requireAdminAuth, adminController.systemSnapshot);
+router.get("/system/provider-usage", requireAdminAuth, adminController.providerUsageHistory);
+router.post("/system/backup/run", requireAdminAuth, adminController.runBackup);
+router.get("/system/backup/:id", requireAdminAuth, adminController.backupById);
+router.post("/system/backup/:id/cancel", requireAdminAuth, adminController.cancelBackup);
+router.get("/system/delete-requests", requireAdminAuth, adminController.deleteRequests);
+router.post("/system/delete-requests", requireAdminAuth, adminController.createDeleteRequest);
+router.post("/system/delete-requests/:id/decision", requireAdminAuth, adminController.decideDeleteRequest);
 
 export default router;

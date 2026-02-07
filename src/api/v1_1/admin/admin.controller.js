@@ -32,6 +32,17 @@ import {
   updateAdminCategoryLimit,
 } from "./services/adminCategories.service.js";
 import {
+  cancelAdminBackup,
+  createAdminDeleteRequest,
+  decideAdminDeleteRequest,
+  getAdminBackupById,
+  getAdminProviderUsageHistory,
+  getAdminSystemSnapshot,
+  listAdminDeleteRequests,
+  parseDeleteRequestQuery,
+  startAdminBackup,
+} from "./services/adminSystem.service.js";
+import {
   authenticateAdmin,
   clearAdminCookie,
   getAccessTokenTtlSeconds,
@@ -346,6 +357,113 @@ export const updateCategorySettings = asyncHandler(async (req, res) => {
     if (!error.status) {
       error.status = 500;
       error.message = "Unable to update category settings.";
+    }
+    throw error;
+  }
+});
+
+export const systemSnapshot = asyncHandler(async (req, res) => {
+  try {
+    const payload = await getAdminSystemSnapshot();
+    return sendAdminSuccess(req, res, payload, "System snapshot loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load system snapshot.";
+    }
+    throw error;
+  }
+});
+
+export const providerUsageHistory = asyncHandler(async (req, res) => {
+  try {
+    const payload = await getAdminProviderUsageHistory({ date: req.query?.date });
+    return sendAdminSuccess(req, res, payload, "Provider usage history loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load provider usage history.";
+    }
+    throw error;
+  }
+});
+
+export const runBackup = asyncHandler(async (req, res) => {
+  try {
+    const payload = await startAdminBackup(req.admin?.email || null, {
+      simulateFailure: req.body?.simulateFailure,
+    });
+    return sendAdminSuccess(req, res, payload, "Backup started.", 201);
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to start backup.";
+    }
+    throw error;
+  }
+});
+
+export const backupById = asyncHandler(async (req, res) => {
+  try {
+    const payload = await getAdminBackupById(req.params.id);
+    return sendAdminSuccess(req, res, payload, "Backup status loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load backup status.";
+    }
+    throw error;
+  }
+});
+
+export const cancelBackup = asyncHandler(async (req, res) => {
+  try {
+    const payload = await cancelAdminBackup(req.params.id);
+    return sendAdminSuccess(req, res, payload, "Backup canceled.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to cancel backup.";
+    }
+    throw error;
+  }
+});
+
+export const deleteRequests = asyncHandler(async (req, res) => {
+  const query = parseDeleteRequestQuery(req.query || {});
+  try {
+    const payload = await listAdminDeleteRequests(query);
+    return sendAdminSuccess(req, res, payload, "Delete requests loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load delete requests.";
+    }
+    throw error;
+  }
+});
+
+export const createDeleteRequest = asyncHandler(async (req, res) => {
+  try {
+    const payload = await createAdminDeleteRequest(req.body || {});
+    return sendAdminSuccess(req, res, payload, "Delete request created.", 201);
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to create delete request.";
+    }
+    throw error;
+  }
+});
+
+export const decideDeleteRequest = asyncHandler(async (req, res) => {
+  try {
+    const payload = await decideAdminDeleteRequest(req.params.id, req.body || {}, req.admin?.email || null);
+    return sendAdminSuccess(req, res, payload, "Delete request decision saved.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to decide delete request.";
     }
     throw error;
   }
