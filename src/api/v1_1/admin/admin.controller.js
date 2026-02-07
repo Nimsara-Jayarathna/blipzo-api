@@ -36,6 +36,7 @@ import {
   createAdminDeleteRequest,
   decideAdminDeleteRequest,
   getAdminBackupById,
+  getAdminBackupDownloadFile,
   getAdminProviderUsageHistory,
   getAdminSystemSnapshot,
   listAdminDeleteRequests,
@@ -411,6 +412,19 @@ export const backupById = asyncHandler(async (req, res) => {
     if (!error.status) {
       error.status = 500;
       error.message = "Unable to load backup status.";
+    }
+    throw error;
+  }
+});
+
+export const downloadBackup = asyncHandler(async (req, res) => {
+  try {
+    const file = await getAdminBackupDownloadFile(req.params.id);
+    return res.download(file.path, file.fileName);
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to download backup file.";
     }
     throw error;
   }

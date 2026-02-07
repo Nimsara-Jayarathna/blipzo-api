@@ -15,6 +15,7 @@ const adminBackupJobSchema = new mongoose.Schema(
     startedAt: { type: Date, default: Date.now },
     completedAt: { type: Date, default: null },
     fileName: { type: String, default: null },
+    storagePath: { type: String, default: null },
     fileSizeBytes: { type: Number, default: null },
     errorCode: { type: String, default: null },
     errorMessage: { type: String, default: null },

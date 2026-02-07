@@ -34,6 +34,7 @@ router.get("/system", requireAdminAuth, adminController.systemSnapshot);
 router.get("/system/provider-usage", requireAdminAuth, adminController.providerUsageHistory);
 router.post("/system/backup/run", requireAdminAuth, adminController.runBackup);
 router.get("/system/backup/:id", requireAdminAuth, adminController.backupById);
+router.get("/system/backup/:id/download", requireAdminAuth, adminController.downloadBackup);
 router.post("/system/backup/:id/cancel", requireAdminAuth, adminController.cancelBackup);
 router.get("/system/delete-requests", requireAdminAuth, adminController.deleteRequests);
 router.post("/system/delete-requests", requireAdminAuth, adminController.createDeleteRequest);

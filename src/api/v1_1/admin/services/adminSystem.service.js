@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import { promises as fs } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import Category from "../../../../models/Category.js";
 import Currency from "../../../../models/Currency.js";
 import Token from "../../../../models/Token.js";
@@ -10,6 +13,10 @@ import AdminDeleteRequest from "../../../../models/AdminDeleteRequest.js";
 const BACKUP_TOTAL_DURATION_MS = 24000;
 const DAILY_PROVIDER_LIMIT = 300;
 const DB_CAPACITY_GB = 5;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DEFAULT_BACKUP_STORAGE_DIR = path.resolve(__dirname, "../../../../../storage/backups");
+const BACKUP_STORAGE_DIR = path.resolve(process.env.ADMIN_BACKUP_STORAGE_DIR || DEFAULT_BACKUP_STORAGE_DIR);
 
 const round = (value, digits = 2) => Number(Number(value || 0).toFixed(digits));
 
@@ -45,6 +52,55 @@ const backupStageByProgress = (progress) => {
   return "Finalizing backup";
 };
 
+const ensureBackupDirectory = async () => {
+  await fs.mkdir(BACKUP_STORAGE_DIR, { recursive: true });
+};
+
+const buildBackupFileName = (date = new Date()) => {
+  const stamp = date.toISOString().replace(/[-:]/g, "").replace(/\..+$/, "Z");
+  return `backup_production_${stamp}.sql`;
+};
+
+const createBackupArtifact = async (job) => {
+  await ensureBackupDirectory();
+
+  const [users, categories, transactions, currencies] = await Promise.all([
+    User.countDocuments({}),
+    Category.countDocuments({}),
+    Transaction.countDocuments({}),
+    Currency.countDocuments({}),
+  ]);
+
+  const generatedAt = new Date();
+  const fileName = buildBackupFileName(generatedAt);
+  const filePath = path.join(BACKUP_STORAGE_DIR, fileName);
+
+  const lines = [
+    "-- Blipzo Admin Manual Backup",
+    `-- backupJobId: ${job._id.toString()}`,
+    `-- generatedAt: ${generatedAt.toISOString()}`,
+    `-- users: ${users}`,
+    `-- categories: ${categories}`,
+    `-- transactions: ${transactions}`,
+    `-- currencies: ${currencies}`,
+    "",
+    "BEGIN TRANSACTION;",
+    "-- This is a placeholder export file for admin download flow.",
+    "-- Replace with mongodump/real snapshot pipeline in production.",
+    "COMMIT;",
+    "",
+  ];
+
+  await fs.writeFile(filePath, lines.join("\n"), "utf8");
+  const stat = await fs.stat(filePath);
+
+  return {
+    fileName,
+    storagePath: filePath,
+    fileSizeBytes: stat.size,
+  };
+};
+
 const refreshBackupJob = async (job) => {
   if (!job || job.status !== "running") {
     return job;
@@ -63,15 +119,17 @@ const refreshBackupJob = async (job) => {
       job.errorCode = "ERR_STORAGE_TIMEOUT_0x442";
       job.errorMessage = "Connection to storage bucket timed out.";
       job.fileName = null;
+      job.storagePath = null;
       job.fileSizeBytes = null;
     } else {
       job.status = "success";
       job.stage = "Backup completed";
       job.errorCode = null;
       job.errorMessage = null;
-      job.fileSizeBytes = await estimateBackupBytes();
-      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      job.fileName = `backup_${stamp}.zip`;
+      const artifact = await createBackupArtifact(job);
+      job.fileName = artifact.fileName;
+      job.storagePath = artifact.storagePath;
+      job.fileSizeBytes = artifact.fileSizeBytes || (await estimateBackupBytes());
     }
 
     await job.save();
@@ -102,6 +160,7 @@ const normalizeBackup = (job) => ({
   startedAt: job.startedAt ? new Date(job.startedAt).toISOString() : null,
   completedAt: job.completedAt ? new Date(job.completedAt).toISOString() : null,
   fileName: job.fileName || null,
+  hasDownload: Boolean(job.storagePath && job.status === "success"),
   fileSizeBytes: job.fileSizeBytes || null,
   errorCode: job.errorCode || null,
   errorMessage: job.errorMessage || null,
@@ -311,6 +370,34 @@ export const getAdminBackupById = async (backupId) => {
 
   await refreshBackupJob(backup);
   return normalizeBackup(backup);
+};
+
+export const getAdminBackupDownloadFile = async (backupId) => {
+  const backup = await AdminBackupJob.findById(backupId);
+  if (!backup) {
+    const error = new Error("Backup job not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  if (backup.status !== "success" || !backup.storagePath || !backup.fileName) {
+    const error = new Error("Backup file is not available for download.");
+    error.status = 409;
+    throw error;
+  }
+
+  try {
+    await fs.access(backup.storagePath);
+  } catch (_error) {
+    const error = new Error("Backup file not found on storage.");
+    error.status = 404;
+    throw error;
+  }
+
+  return {
+    path: backup.storagePath,
+    fileName: backup.fileName,
+  };
 };
 
 export const cancelAdminBackup = async (backupId) => {
