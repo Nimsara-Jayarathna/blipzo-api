@@ -12,5 +12,6 @@ router.post("/auth/login", authLimiter, adminController.login);
 router.get("/auth/session", adminController.session);
 router.post("/auth/logout", adminController.logout);
 router.get("/dashboard", requireAdminAuth, adminController.dashboard);
+router.get("/users", requireAdminAuth, adminController.users);
 
 export default router;

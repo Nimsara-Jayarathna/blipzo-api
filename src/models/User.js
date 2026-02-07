@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema(
       default: ["Stock"],
     },
     currency: { type: mongoose.Schema.Types.ObjectId, ref: "Currency" },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
+      default: "ACTIVE",
+      index: true,
+    },
     passwordResetToken: String,
     passwordResetExpires: Date,
   },

@@ -4,6 +4,7 @@ import {
   getDashboardSnapshot,
   parseDashboardQuery,
 } from "./services/adminDashboard.service.js";
+import { getAdminUsers, parseUsersQuery } from "./services/adminUsers.service.js";
 import {
   authenticateAdmin,
   clearAdminCookie,
@@ -76,6 +77,21 @@ export const dashboard = asyncHandler(async (req, res) => {
     if (!error.status) {
       error.status = 500;
       error.message = "Unable to load dashboard snapshot.";
+    }
+    throw error;
+  }
+});
+
+export const users = asyncHandler(async (req, res) => {
+  const query = parseUsersQuery(req.query || {});
+
+  try {
+    const payload = await getAdminUsers(query);
+    return sendAdminSuccess(req, res, payload, "Users loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load users.";
     }
     throw error;
   }
