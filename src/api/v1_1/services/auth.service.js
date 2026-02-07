@@ -109,7 +109,7 @@ export const completeRegistration = async ({ registrationToken, name, fname, lna
     const displayName = user.name || `${user.fname} ${user.lname}`.trim();
     sendWelcomeEmail(user.email, displayName).catch(err => console.error("Failed to send welcome email:", err));
 
-    const tokens = issueTokens(user._id);
+    const tokens = issueTokens(user._id, user.tokenVersion || 0);
     return { user, tokens };
 };
 

@@ -47,6 +47,8 @@ export const registerUser = async ({ name, fname, lname, email, password }) => {
         lname,
         email,
         password: hashedPassword,
+        status: "ACTIVE",
+        tokenVersion: 0,
     });
 
     // Assign default currency
@@ -58,7 +60,7 @@ export const registerUser = async ({ name, fname, lname, email, password }) => {
 
     await ensureDefaultCategories(user._id);
 
-    const tokens = issueTokens(user._id);
+    const tokens = issueTokens(user._id, user.tokenVersion || 0);
 
     return { user, tokens };
 };
@@ -87,7 +89,10 @@ export const loginUser = async ({ email, password }) => {
     // Ensure default categories exist (in case of legacy users or manual db edits)
     await ensureDefaultCategories(user._id);
 
-    const tokens = issueTokens(user._id);
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    const tokens = issueTokens(user._id, user.tokenVersion || 0);
 
     return { user, tokens };
 };
@@ -104,6 +109,12 @@ export const getUserSession = async (token) => {
 
     if (!user) {
         const error = new Error("User not found for this token");
+        error.status = 401;
+        throw error;
+    }
+
+    if ((decoded.tokenVersion || 0) !== (user.tokenVersion || 0)) {
+        const error = new Error("Session expired");
         error.status = 401;
         throw error;
     }
@@ -127,11 +138,17 @@ export const refreshUserSession = async (refreshToken) => {
         throw error;
     }
 
+    if ((decoded.tokenVersion || 0) !== (user.tokenVersion || 0)) {
+        const error = new Error("Session expired");
+        error.status = 401;
+        throw error;
+    }
+
     // Issue new tokens on refresh is a common pattern, 
     // but the original controller only re-issued if we treat `respondWithAuth` as doing so.
     // The original `respondWithAuth` calls `issueTokens`. 
     // So yes, we issue new access/refresh tokens.
-    const tokens = issueTokens(user._id);
+    const tokens = issueTokens(user._id, user.tokenVersion || 0);
 
     return { user, tokens };
 };

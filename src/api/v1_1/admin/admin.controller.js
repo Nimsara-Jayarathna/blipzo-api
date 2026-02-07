@@ -4,7 +4,15 @@ import {
   getDashboardSnapshot,
   parseDashboardQuery,
 } from "./services/adminDashboard.service.js";
-import { getAdminUsers, parseUsersQuery } from "./services/adminUsers.service.js";
+import {
+  adminForceLogoutUser,
+  adminResetUserPassword,
+  getAdminUserActivity,
+  getAdminUserById,
+  getAdminUsers,
+  parseUsersQuery,
+  updateAdminUserById,
+} from "./services/adminUsers.service.js";
 import {
   authenticateAdmin,
   clearAdminCookie,
@@ -92,6 +100,76 @@ export const users = asyncHandler(async (req, res) => {
     if (!error.status) {
       error.status = 500;
       error.message = "Unable to load users.";
+    }
+    throw error;
+  }
+});
+
+export const userById = asyncHandler(async (req, res) => {
+  try {
+    const payload = await getAdminUserById(req.params.id);
+    return sendAdminSuccess(req, res, payload, "User loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load user.";
+    }
+    throw error;
+  }
+});
+
+export const updateUser = asyncHandler(async (req, res) => {
+  try {
+    const payload = await updateAdminUserById(req.params.id, req.body || {});
+    return sendAdminSuccess(req, res, payload, "User updated.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to update user.";
+    }
+    throw error;
+  }
+});
+
+export const resetUserPassword = asyncHandler(async (req, res) => {
+  try {
+    const payload = await adminResetUserPassword(req.params.id);
+    return sendAdminSuccess(
+      req,
+      res,
+      payload,
+      "Password reset completed and temporary password emailed."
+    );
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to reset password.";
+    }
+    throw error;
+  }
+});
+
+export const forceLogoutUser = asyncHandler(async (req, res) => {
+  try {
+    const payload = await adminForceLogoutUser(req.params.id);
+    return sendAdminSuccess(req, res, payload, "User force logged out.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to force logout user.";
+    }
+    throw error;
+  }
+});
+
+export const userActivity = asyncHandler(async (req, res) => {
+  try {
+    const payload = await getAdminUserActivity(req.params.id);
+    return sendAdminSuccess(req, res, { activity: payload }, "User activity loaded.");
+  } catch (error) {
+    if (!error.status) {
+      error.status = 500;
+      error.message = "Unable to load user activity.";
     }
     throw error;
   }
