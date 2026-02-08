@@ -8,8 +8,6 @@ services:
       PORT: ${CONTAINER_PORT}
       MONGO_URI: ${MONGO_URI}
       MONGO_DB_NAME: ${MONGO_DB_NAME}
-    ports:
-      - "${HOST_BIND_IP}:${HOST_PORT}:${CONTAINER_PORT}"
     expose:
       - "${CONTAINER_PORT}"
     depends_on:
