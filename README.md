@@ -124,6 +124,22 @@ Set these CI/CD variables in GitLab:
 - `PROD_HOST_PORT` (example: `5002`)
 - `PROD_CONTAINER_PORT` (example: `5000`)
 
+### GitLab CI Variables For Admin Seed User
+
+Admin bootstrap uses env values only (no hardcoded credentials in code).
+
+Set these protected/masked CI variables:
+
+- `STG_ADMIN_SEED_EMAIL`
+- `STG_ADMIN_SEED_PASSWORD`
+- `PROD_ADMIN_SEED_EMAIL`
+- `PROD_ADMIN_SEED_PASSWORD`
+
+These are injected into deployed `.env` as:
+
+- `ADMIN_SEED_EMAIL`
+- `ADMIN_SEED_PASSWORD`
+
 ## Project structure
 - `src/` - application source
 - `docs/` - API docs and release notes
