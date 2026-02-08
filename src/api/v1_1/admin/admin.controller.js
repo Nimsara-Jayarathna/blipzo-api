@@ -45,29 +45,89 @@ import {
 } from "./services/adminSystem.service.js";
 import {
   authenticateAdmin,
+  cancelAdminOtpChallenge,
   clearAdminCookie,
+  clearAdminOtpChallengeCookie,
   getAccessTokenTtlSeconds,
   getActiveAdminById,
+  getAdminOtpChallengeStatus,
   getAdminTokenFromRequest,
+  resendAdminOtpChallenge,
   setAdminCookie,
+  setAdminOtpChallengeCookie,
   signAdminAccessToken,
+  startAdminOtpChallenge,
+  verifyAdminOtpChallenge,
   verifyAdminAccessToken,
 } from "./services/adminAuth.service.js";
+import { getClientIp } from "../../../utils/logger.js";
 
 export const login = asyncHandler(async (req, res) => {
   const admin = await authenticateAdmin(req.body || {});
-  const token = signAdminAccessToken(admin);
-  setAdminCookie(res, token);
+  const otpChallenge = await startAdminOtpChallenge(admin, {
+    ip: getClientIp(req),
+    userAgent: req.get("user-agent") || undefined,
+  });
+  setAdminOtpChallengeCookie(res, otpChallenge.challengeToken);
+  clearAdminCookie(res);
 
   return sendAdminSuccess(
     req,
     res,
     {
-      admin,
+      otpRequired: true,
+      ...otpChallenge.status,
+    },
+    "Verification code sent to your email."
+  );
+});
+
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const result = await verifyAdminOtpChallenge({
+    req,
+    otp: req.body?.otp,
+    requestMeta: {
+      ip: getClientIp(req),
+      userAgent: req.get("user-agent") || undefined,
+    },
+  });
+
+  const token = signAdminAccessToken(result.admin);
+  setAdminCookie(res, token);
+  clearAdminOtpChallengeCookie(res);
+
+  return sendAdminSuccess(
+    req,
+    res,
+    {
+      admin: result.admin,
       session: { accessTokenExpiresInSeconds: getAccessTokenTtlSeconds() },
     },
-    "Login successful."
+    "Verification successful."
   );
+});
+
+export const resendOtp = asyncHandler(async (req, res) => {
+  const status = await resendAdminOtpChallenge({
+    req,
+    requestMeta: {
+      ip: getClientIp(req),
+      userAgent: req.get("user-agent") || undefined,
+    },
+  });
+
+  return sendAdminSuccess(req, res, status, "Verification code resent.");
+});
+
+export const otpStatus = asyncHandler(async (req, res) => {
+  const status = await getAdminOtpChallengeStatus(req);
+  return sendAdminSuccess(req, res, status, "OTP challenge active.");
+});
+
+export const cancelOtp = asyncHandler(async (req, res) => {
+  await cancelAdminOtpChallenge(req);
+  clearAdminOtpChallengeCookie(res);
+  return sendAdminSuccess(req, res, {}, "OTP challenge cancelled.");
 });
 
 export const session = asyncHandler(async (req, res) => {
@@ -101,7 +161,9 @@ export const session = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
+  await cancelAdminOtpChallenge(req);
   clearAdminCookie(res);
+  clearAdminOtpChallengeCookie(res);
   return sendAdminSuccess(req, res, {}, "Logged out successfully.");
 });
 

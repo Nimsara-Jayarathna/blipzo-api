@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as adminController from "./admin.controller.js";
 import { attachAdminRequestMeta } from "./utils/adminResponse.js";
-import { authLimiter } from "../../../middleware/rateLimiter.js";
+import { authLimiter, emailLimiter } from "../../../middleware/rateLimiter.js";
 import { requireAdminAuth } from "./middleware/adminAuth.middleware.js";
 
 const router = Router();
@@ -9,6 +9,10 @@ const router = Router();
 router.use(attachAdminRequestMeta);
 
 router.post("/auth/login", authLimiter, adminController.login);
+router.post("/auth/otp/verify", authLimiter, adminController.verifyOtp);
+router.post("/auth/otp/resend", emailLimiter, adminController.resendOtp);
+router.get("/auth/otp/status", adminController.otpStatus);
+router.post("/auth/otp/cancel", adminController.cancelOtp);
 router.get("/auth/session", adminController.session);
 router.post("/auth/logout", adminController.logout);
 router.get("/dashboard", requireAdminAuth, adminController.dashboard);
