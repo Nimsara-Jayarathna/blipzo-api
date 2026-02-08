@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import AdminUser from "../models/AdminUser.js";
-import { logger } from "./logger.js";
+import { hashEmail, logger } from "./logger.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;
 
@@ -20,7 +20,7 @@ export const seedAdminUser = async () => {
   if (existing) {
     logger.info({
       message: "Admin bootstrap skipped: seed admin already exists.",
-      adminEmail: seedEmail,
+      adminEmailHash: hashEmail(seedEmail),
     });
     return;
   }
@@ -35,6 +35,6 @@ export const seedAdminUser = async () => {
 
   logger.info({
     message: "Admin bootstrap completed.",
-    adminEmail: seedEmail,
+    adminEmailHash: hashEmail(seedEmail),
   });
 };

@@ -8,6 +8,7 @@ import {
   welcomeEmail,
   passwordChanged,
   adminGeneratedPassword,
+  adminOtpVerification,
 } from "../../../utils/emailTemplates.js";
 import { hashEmail, logger } from "../../../utils/logger.js";
 
@@ -111,4 +112,9 @@ export const sendAdminPasswordResetNotification = async (email, name, temporaryP
     html,
     "admin_password_reset"
   );
+};
+
+export const sendAdminOtpEmail = async (email, otp) => {
+  const html = adminOtpVerification(otp);
+  return sendEmail(email, "Your Admin Verification Code - Blipzo", html, "admin_otp");
 };

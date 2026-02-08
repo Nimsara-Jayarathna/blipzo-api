@@ -119,3 +119,11 @@ export const adminGeneratedPassword = (name, temporaryPassword) => baseTemplate(
   <p>Please sign in using this temporary password and change it immediately.</p>
   <p>If you did not expect this action, contact support right away.</p>
 `);
+
+export const adminOtpVerification = (code) => baseTemplate(`
+  <h2>Admin Security Verification</h2>
+  <p>Use this One-Time Password (OTP) to complete your Blipzo Admin sign-in:</p>
+  <div class="otp-code">${code}</div>
+  <p>This code expires in 5 minutes and can be used only once.</p>
+  <p>If you did not request this sign-in, contact support immediately.</p>
+`);
