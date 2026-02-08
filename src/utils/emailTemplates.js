@@ -109,3 +109,13 @@ export const passwordChanged = (name, resetLink) => baseTemplate(`
   <p>Or paste this link into your browser:</p>
   <p><a href="${resetLink}">${resetLink}</a></p>
 `);
+
+export const adminGeneratedPassword = (name, temporaryPassword) => baseTemplate(`
+  <h2>Your Password Was Reset by Admin</h2>
+  <p>Hi ${name},</p>
+  <p>An administrator reset your Blipzo account password.</p>
+  <p>Your temporary password is:</p>
+  <div class="otp-code" style="letter-spacing: 2px;">${temporaryPassword}</div>
+  <p>Please sign in using this temporary password and change it immediately.</p>
+  <p>If you did not expect this action, contact support right away.</p>
+`);
