@@ -113,17 +113,6 @@ GitHub Actions workflow (`.github/workflows/deploy.yml`) deploys:
 - `dev` branch -> staging
 - `main` branch -> production
 
-### GitLab CI Variables For Internal Port Mapping
-
-Set these CI/CD variables in GitLab:
-
-- `STG_HOST_BIND_IP` (recommended: `127.0.0.1`)
-- `STG_HOST_PORT` (example: `5001`)
-- `STG_CONTAINER_PORT` (example: `5000`)
-- `PROD_HOST_BIND_IP` (recommended: `127.0.0.1`)
-- `PROD_HOST_PORT` (example: `5002`)
-- `PROD_CONTAINER_PORT` (example: `5000`)
-
 ### GitLab CI Variables For Admin Seed User
 
 Admin bootstrap uses env values only (no hardcoded credentials in code).
